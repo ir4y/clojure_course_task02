@@ -9,7 +9,7 @@
         dir-list (filter #(.isDirectory %) full-list)]
     (if (empty? dir-list)
       file-list
-      (mapcat get-file-list dir-list))))
+      (mapcat deref (map #(future (get-file-list %))  dir-list)))))
 
 (defn filter-by-re [re-string array]
   (filter #(->> %  (re-find (re-pattern re-string)) (= nil) not) array))
