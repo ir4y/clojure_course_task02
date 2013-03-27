@@ -3,28 +3,28 @@
 
 (require '[clojure.java.io :as io])
 
-(defn to-path [path file]
-  (apply str path "/" file))
-
-(defn get-file-list [path]
-  (let [full-list (-> (io/file path) .list vec)
-        file-list (filter #(-> (io/file %) .isDirectory not) full-list)
-        dir-list (filter #(-> (io/file %) .isDirectory) full-list)]
+(defn get-file-list [directory]
+  (let [full-list (vec (.listFiles directory))
+        file-list (filter #(not (.isDirectory %)) full-list)
+        dir-list (filter #(.isDirectory %) full-list)]
     (if (empty? dir-list)
       file-list
-      (mapcat #(get-file-list (to-path path %)) dir-list))))
+      (mapcat get-file-list dir-list))))
 
-(defn find-files [file-name path]
-  "TODO: Implement searching for a file using his name as a regexp."
-  nil)
+(defn filter-by-re [re-string array]
+  (filter #(->> %  (re-find (re-pattern re-string)) (= nil) not) array))
+
+(defn find-files [file-name-re path]
+  (let [file-list (get-file-list (io/file path))]
+    (filter-by-re file-name-re (map #(.getName %) file-list))))
 
 (defn usage []
   (println "Usage: $ run.sh file_name path"))
 
-(defn -main [file-name path]
-  (if (or (nil? file-name)
+(defn -main [file-name-re path]
+  (if (or (nil? file-name-re)
           (nil? path))
     (usage)
     (do
-      (println "Searching for " file-name " in " path "...")
-      (dorun (map println (find-files file-name path))))))
+      (println "Searching for " file-name-re " in " path "...")
+      (dorun (map println (find-files file-name-re path))))))
