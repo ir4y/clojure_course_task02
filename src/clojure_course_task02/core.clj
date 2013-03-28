@@ -5,14 +5,14 @@
 
 (defn get-file-list [directory]
   (let [full-list (vec (.listFiles directory))
-        file-list (filter #(not (.isDirectory %)) full-list)
+        file-list (remove #(.isDirectory %) full-list)
         dir-list (filter #(.isDirectory %) full-list)]
     (if (empty? dir-list)
       file-list
-      (mapcat deref (map #(future (get-file-list %))  dir-list)))))
+      (mapcat deref (doall (map #(future (get-file-list %))  dir-list))))))
 
 (defn filter-by-re [re-string array]
-  (filter #(->> %  (re-find (re-pattern re-string)) (= nil) not) array))
+  (filter #(->> %  (re-find (re-pattern re-string)) nil? not) array))
 
 (defn find-files [file-name-re path]
   (let [file-list (get-file-list (io/file path))]
